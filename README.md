@@ -32,9 +32,12 @@ Ingress via NGINX or Traefik: Serves as a load balancer for traffic management a
 
 –	Security and Networking
 Istio: To manage traffic between microservices, provide security (TLS, authentication, authorization), and advanced routing policies both for incoming traffic and inside the cluster.
+
 –	CI/CD
 Helm and GitHub: To manage the lifecycle of continuous integration and continuous delivery (CI/CD). These tools will ensure that code is automatically tested, built, and deployed.
+
 –	Storage
 Solutions for persistent and non-persistent storage: e.g., PVCs in Kubernetes for persistent data, and solutions like Redis or Memcached for temporary data and caching.
+
 –	System Resilience
 It is not yet decided whether to leave the choice to the user or create some form of automation. For example: initially have an asynchronous copy, then a synchronous copy at intervals. Or rely on a semi-synchronous approach from the start.
