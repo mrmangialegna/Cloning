@@ -39,5 +39,7 @@ Helm and GitHub: To manage the lifecycle of continuous integration and continuou
 –	Storage
 Solutions for persistent and non-persistent storage: e.g., PVCs in Kubernetes for persistent data, and solutions like Redis or Memcached for temporary data and caching.
 
+Observations
+
 –	System Resilience
 It is not yet decided whether to leave the choice to the user or create some form of automation. For example: initially have an asynchronous copy, then a synchronous copy at intervals. Or rely on a semi-synchronous approach from the start.
