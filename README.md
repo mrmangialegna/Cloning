@@ -1,118 +1,62 @@
-# Cloning
-Heroku Clone
+Operational Structure
 
-Project Plan - Ideas, technologies
+Base machines running Docker and Kubernetes (K8s). These will be responsible for abstracting and managing the infrastructure on which user projects will run. The workflow will be as follows:
 
-# Project Name
+Code Analyzer: Will read the user’s project to determine the necessary resources (CPU, GPU, storage) and will build the hardware abstraction. It will also analyze the code dependencies and its nature.
 
-A platform designed to abstract and manage infrastructure for user projects through Docker, Kubernetes, and intelligent code analysis.  
-The system aims to automatically determine resource requirements, optimize scaling, and provide resilience for workloads.
+Scaling: Will be managed by a mix of code analyzer, metrics, and load balancer. Specifically:
 
----
+Analyzer: Determines the resource requirements and generates an allocation plan.
 
-## Table of Contents
-- [System Architecture](#system-architecture)
-- [Core Technologies](#core-technologies)
-- [Scaling & Resilience](#scaling--resilience)
-- [CI/CD](#cicd)
-- [Storage](#storage)
-- [Roadmap](#roadmap)
+Metrics: Collects performance information from system components, such as CPU load, memory usage, etc., to feed the scaling system.
 
----
+Load Balancer: Manages incoming traffic at both layer 4 (TCP/UDP) and layer 7 (HTTP), distributing the load across containers.
 
-## System Architecture
+Technologies to Use
+Code Analyzer
 
-The base machines will run **Docker** and **Kubernetes (K8s)**.  
-These will be responsible for abstracting and managing the infrastructure on which users’ projects will be executed.  
+Cloud Native Buildpacks: To analyze code and determine required resources.
 
-### Workflow
+In communication with Terraform to create the necessary base infrastructure. A Python script will read these metrics and configure Terraform.
 
-1. **Code Analyzer**  
-   - Reads the user’s project to determine required resources (CPU, GPU, storage).  
-   - Analyzes code dependencies and its nature.  
-   - Builds the hardware abstraction layer.  
+Alternatively, provide a fixed base and then leave scalability to the other components.
 
-2. **Scaling**  
-   Scaling is managed through a combination of components:  
-   - **Analyzer:** Determines resource requirements and generates the allocation plan.  
-   - **Metrics:** Collects performance data (CPU load, memory usage, etc.) to feed the scaling system.  
-   - **Load Balancer:** Manages incoming traffic at both layer 4 (TCP/UDP) and layer 7 (HTTP), distributing the load across containers.  
+Containerization
 
----
+Docker and Docker Compose: For container management during development.
 
-## Core Technologies
+Kubernetes (K8s): To orchestrate containers at production level.
 
-### Code Analyzer
-- **SonarQube** or **Cloud Native Buildpacks**: Analyze code and determine required resources.  
-- Integrated with **Terraform** to create the necessary infrastructure.  
-- A **Python script** will read analyzer metrics and configure Terraform accordingly.  
-- Alternative option: provide a fixed baseline and delegate scalability to other components.  
+Helm: To manage configurations and deployments on Kubernetes.
 
-### Containerization
-- **Docker & Docker Compose**: For managing containers in development.  
-- **Kubernetes (K8s)**: To orchestrate containers in production.  
-- **Helm**: For managing configurations and deployments on Kubernetes.  
+Metrics
 
-### Metrics
-- **Prometheus**: Collects metrics related to performance, resource usage, and container health.  
-- Provides input for the autoscaling system and monitoring.  
+Prometheus: Will collect all metrics related to performance, resource usage, and container status.
 
-### Autoscaling
-- **KEDA (Kubernetes Event-driven Autoscaling):** Manages autoscaling based on events and metrics from Prometheus.  
-- **Redis:**  
-  - Handles workload management and caching (TTL policy).  
-  - Supports autoscaling for high-intensity workloads.  
-  - Duplicates all incoming data on a **PersistentVolumeClaim (PVC)**.  
-  - PVC garbage policies remove cache files every 24 hours, ensuring no data loss in crash scenarios.  
+Will feed the automatic scaling system and monitoring.
 
-### Load Balancing
-- **NGINX Ingress** or **Traefik**:  
-  - Load balancer for both L4 (TCP/UDP) and L7 (HTTP).  
-  - Distributes requests among Kubernetes pods and manages traffic balancing.  
+Autoscaling
 
-### Security & Networking
-- **Istio**:  
-  - Manages service-to-service traffic.  
-  - Provides security (TLS, authentication, authorization).  
-  - Implements advanced routing policies for both ingress and internal cluster traffic.  
+Karpenter + KEDA: To manage autoscaling based on events and metrics collected by Prometheus.
 
-### CI/CD
-- **Helm with Jenkins or GitLab**:  
-  - Manages continuous integration and continuous delivery (CI/CD).  
-  - Ensures code is tested, built, and deployed automatically.  
+Redis: Used for workload management, caching (TTL policy), and support for autoscaling, especially for high-intensity workloads. Additionally, it will make copies of all incoming data on a PVC, which, configured according to garbage policies, will delete only cache files every 24 hours. This prevents data loss in crash scenarios.
 
----
+NLB (Load Balancer)
 
-## Storage
+Ingress via NGINX or Traefik: Serves as a load balancer for traffic management at layer 4 and 7, distributing requests across Kubernetes pods and handling traffic balancing.
 
-- **Persistent Storage:**  
-  Kubernetes PersistentVolumeClaims (PVC) for long-term data persistence.  
+Security and Networking
 
-- **Non-persistent / Ephemeral Storage:**  
-  - **Redis** or **Memcached** for caching and temporary data.  
+Istio: To manage traffic between microservices, provide security (TLS, authentication, authorization), and advanced routing policies both for incoming traffic and inside the cluster.
 
----
+CI/CD
 
-## Scaling & Resilience
+Helm and GitHub: To manage the lifecycle of continuous integration and continuous delivery (CI/CD). These tools will ensure that code is automatically tested, built, and deployed.
 
-The system is designed with flexibility in resilience strategies.  
-Two approaches are under consideration:  
+Storage
 
-1. **User-driven choice:** Users decide the replication policy.  
-2. **Automated strategy:** Implement hybrid replication models:  
-   - Start with **asynchronous replication**, then perform **synchronous copies** at intervals.  
-   - Or adopt **semi-synchronous replication** from the beginning.  
+Solutions for persistent and non-persistent storage: e.g., PVCs in Kubernetes for persistent data, and solutions like Redis or Memcached for temporary data and caching.
 
----
+System Resilience
 
-## Roadmap
-
-- [ ] Provide fixed infrastructure baseline with Kubernetes and Docker.  
-- [ ] Integrate SonarQube / Buildpacks for code analysis.  
-- [ ] Implement Python script to configure Terraform.  
-- [ ] Add Redis caching + PVC garbage policies.  
-- [ ] Enable Prometheus metrics collection.  
-- [ ] Deploy KEDA autoscaling.  
-- [ ] Add NGINX / Traefik ingress load balancing.  
-- [ ] Implement Istio service mesh with security policies.  
-- [ ] Configure CI/CD pipeline (Jenkins or GitLab with Helm).  
+It is not yet decided whether to leave the choice to the user or create some form of automation. For example: initially have an asynchronous copy, then a synchronous copy at intervals. Or rely on a semi-synchronous approach from the start.
